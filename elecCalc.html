@@ -1,0 +1,69 @@
+<!DOCTYPE html><html lang="ko"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>전기 요금 계산기</title></head><body>
+    <h1>전기 요금 계산기</h1>
+    <label for="usage">전기 사용량 (kWh): </label>
+    <input type="number" id="usage" min="0">
+    <button onclick="calculateBill()">계산하기</button>
+    <div id="result"></div>
+
+    <script>
+        function numberWithCommas(x) {
+            return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+        function calculateBill() {
+            const usage = document.getElementById('usage').value;
+            let basicFee, electricityRate, climateEnvFee, fuelCostAdjFee, totalAmount, vat, electricityInfraFund, finalBill;
+
+            // 기본 요금 계산
+            if (usage <= 300) {
+                basicFee = 910;
+            } else if (usage <= 450) {
+                basicFee = 1600;
+            } else {
+                basicFee = 7300;
+            }
+
+            // 전기 요금 계산
+            if (usage <= 300) {
+                electricityRate = usage * 120;
+            } else if (usage <= 450) {
+                electricityRate = (300 * 120) + ((usage - 300) * 214.6);
+            } else {
+                electricityRate = (300 * 120) + (150 * 214.6) + ((usage - 450) * 307.3);
+            }
+
+            // 기후환경 요금 계산
+            climateEnvFee = usage * 9;
+
+            // 연료비 조정 요금 계산
+            fuelCostAdjFee = usage * 5;
+
+            // 전기 요금계 계산
+            totalAmount = basicFee + electricityRate + climateEnvFee + fuelCostAdjFee;
+
+            // 부가가치세 계산 (전기 요금계의 10%)
+            vat = Math.ceil(totalAmount * 0.1);
+
+            // 전력산업기반기금 계산 (전기 요금계의 3.7%, 10원 미만 절사)
+            electricityInfraFund = Math.floor(totalAmount * 0.037 / 10) * 10;
+
+            // 청구 금액 계산
+            finalBill = totalAmount + vat + electricityInfraFund;
+
+            // 결과 출력 (쉼표 포맷팅 적용)
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `
+                <p>기본 요금: ${numberWithCommas(basicFee)}원</p>
+                <p>전력량 요금: ${numberWithCommas(electricityRate.toFixed(2))}원</p>
+                <p>기후환경 요금: ${numberWithCommas(climateEnvFee)}원</p>
+                <p>연료비 조정 요금: ${numberWithCommas(fuelCostAdjFee)}원</p>
+                <p>전기 요금계: ${numberWithCommas(totalAmount.toFixed(2))}원</p>
+                <p>부가가치세: ${numberWithCommas(vat)}원</p>
+                <p>전력산업기반기금: ${numberWithCommas(electricityInfraFund)}원</p>
+                <p>청구 금액: ${numberWithCommas(finalBill)}원</p>
+            `;
+        }
+    </script></body></html>
