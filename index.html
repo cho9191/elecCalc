@@ -1,69 +1,195 @@
-<!DOCTYPE html><html lang="ko"><head>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>전기 요금 계산기</title></head><body>
-    <h1>전기 요금 계산기</h1>
-    <label for="usage">전기 사용량 (kWh): </label>
-    <input type="number" id="usage" min="0">
-    <button onclick="calculateBill()">계산하기</button>
-    <div id="result"></div>
+    <title>탭으로 구분된 페이지</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+            margin-bottom: 20px;
+        }
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: background-color 0.3s;
+        }
+        .tab button:hover {
+            background-color: #ddd;
+        }
+        .tab button.active {
+            background-color: #ccc;
+        }
+        .tabcontent {
+            display: none;
+            padding: 20px;
+            border-top: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="tab">
+    <button class="tablinks" onclick="openTab(event, 'bankCalculator')" id="defaultOpen">은행 및 계산기</button>
+    <button class="tablinks" onclick="openTab(event, 'temporary')">전기 요금 계산기</button>
+</div>
+
+<div id="bankCalculator" class="tabcontent">
+    <h3>은행 및 계산기</h3>
+    <div class="calculator">
+        <h2>은행 이자 계산기</h2>
+        <label for="principal">원금 (₩):</label>
+        <input type="number" id="principal" placeholder="원금을 입력하세요" value="100000000">
+
+        <label for="rate">이자율 (%):</label>
+        <input type="number" id="rate" placeholder="이자율을 입력하세요" value="3">
+
+        <label for="years">기간 (년):</label>
+        <input type="number" id="years" placeholder="기간을 입력하세요" value="1">
+
+        <button onclick="calculateInterest()">계산하기</button>
+
+        <div class="result" id="result"></div>
+    </div>
 
     <script>
-        function numberWithCommas(x) {
-            return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        }
+        function calculateInterest() {
+            var principal = document.getElementById("principal").value;
+            var rate = document.getElementById("rate").value;
+            var years = document.getElementById("years").value;
 
-        function calculateBill() {
-            const usage = document.getElementById('usage').value;
-            let basicFee, electricityRate, climateEnvFee, fuelCostAdjFee, totalAmount, vat, electricityInfraFund, finalBill;
-
-            // 기본 요금 계산
-            if (usage <= 300) {
-                basicFee = 910;
-            } else if (usage <= 450) {
-                basicFee = 1600;
-            } else {
-                basicFee = 7300;
+            if (principal === "" || rate === "" || years === "") {
+                alert("모든 필드를 입력하세요");
+                return;
             }
 
-            // 전기 요금 계산
-            if (usage <= 300) {
-                electricityRate = usage * 120;
-            } else if (usage <= 450) {
-                electricityRate = (300 * 120) + ((usage - 300) * 214.6);
-            } else {
-                electricityRate = (300 * 120) + (150 * 214.6) + ((usage - 450) * 307.3);
+            principal = parseFloat(principal);
+            rate = parseFloat(rate);
+            years = parseFloat(years);
+
+            var interest = principal * (rate / 100) * years;
+            var tax = interest * 0.165;  // 이자에 대한 세금 계산
+            var totalAmount = principal + interest;
+            var actualAmount = totalAmount - tax;
+            var dailyIncome = Math.floor((actualAmount - principal) / 365);  // 소수점 이하 제거하고 정수화
+
+            function numberWithCommas(x) {
+                return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
             }
 
-            // 기후환경 요금 계산
-            climateEnvFee = usage * 9;
+            var formattedInterest = interest.toFixed(0);  // 소수점 이하 제거
+            var formattedTax = tax.toFixed(0);  // 소수점 이하 제거
+            var formattedTotalAmount = totalAmount.toFixed(0);  // 소수점 이하 제거
+            var formattedActualAmount = actualAmount.toFixed(0);  // 소수점 이하 제거
 
-            // 연료비 조정 요금 계산
-            fuelCostAdjFee = usage * 5;
-
-            // 전기 요금계 계산
-            totalAmount = basicFee + electricityRate + climateEnvFee + fuelCostAdjFee;
-
-            // 부가가치세 계산 (전기 요금계의 10%)
-            vat = Math.ceil(totalAmount * 0.1);
-
-            // 전력산업기반기금 계산 (전기 요금계의 3.7%, 10원 미만 절사)
-            electricityInfraFund = Math.floor(totalAmount * 0.037 / 10) * 10;
-
-            // 청구 금액 계산
-            finalBill = totalAmount + vat + electricityInfraFund;
-
-            // 결과 출력 (쉼표 포맷팅 적용)
-            const resultDiv = document.getElementById('result');
-            resultDiv.innerHTML = `
-                <p>기본 요금: ${numberWithCommas(basicFee)}원</p>
-                <p>전력량 요금: ${numberWithCommas(electricityRate.toFixed(2))}원</p>
-                <p>기후환경 요금: ${numberWithCommas(climateEnvFee)}원</p>
-                <p>연료비 조정 요금: ${numberWithCommas(fuelCostAdjFee)}원</p>
-                <p>전기 요금계: ${numberWithCommas(totalAmount.toFixed(2))}원</p>
-                <p>부가가치세: ${numberWithCommas(vat)}원</p>
-                <p>전력산업기반기금: ${numberWithCommas(electricityInfraFund)}원</p>
-                <p>청구 금액: ${numberWithCommas(finalBill)}원</p>
+            var result = `
+                <p>이자: ${numberWithCommas(formattedInterest)} (원)</p>
+                <p>세금: ${numberWithCommas(formattedTax)} (원)</p>
+                <p>총 금액: ${numberWithCommas(formattedTotalAmount)} (원)</p>
+                <p>실제 수익: ${numberWithCommas(formattedActualAmount)} (원)</p>
+                <p>하루 당 실제 수익: <span class="highlight">${numberWithCommas(dailyIncome)} (원)</span></p>
             `;
+            document.getElementById("result").innerHTML = result;
         }
-    </script></body></html>
+
+        // 탭 열기 함수
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+
+        // 기본 탭 설정
+        document.getElementById("defaultOpen").click();
+    </script>
+</div>
+
+<div id="temporary" class="tabcontent">
+   
+        <h1>전기 요금 계산기</h1>
+        <label for="usage">전기 사용량 (kWh): </label>
+        <input type="number" id="usage" min="0">
+        <button onclick="calculateBill()">계산하기</button>
+        <div id="result2"></div>
+    
+        <script>
+            function numberWithCommas(x) {
+                return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            }
+    
+            function calculateBill() {
+                console.log('test2');
+                const usage = document.getElementById('usage').value;
+                let basicFee, electricityRate, climateEnvFee, fuelCostAdjFee, totalAmount, vat, electricityInfraFund, finalBill;
+    
+                // 기본 요금 계산
+                if (usage <= 300) {
+                    basicFee = 910;
+                } else if (usage <= 450) {
+                    basicFee = 1600;
+                } else {
+                    basicFee = 7300;
+                }
+    
+                // 전기 요금 계산
+                if (usage <= 300) {
+                    electricityRate = usage * 120;
+                } else if (usage <= 450) {
+                    electricityRate = (300 * 120) + ((usage - 300) * 214.6);
+                } else {
+                    electricityRate = (300 * 120) + (150 * 214.6) + ((usage - 450) * 307.3);
+                }
+    
+                // 기후환경 요금 계산
+                climateEnvFee = usage * 9;
+    
+                // 연료비 조정 요금 계산
+                fuelCostAdjFee = usage * 5;
+    
+                // 전기 요금계 계산
+                totalAmount = basicFee + electricityRate + climateEnvFee + fuelCostAdjFee;
+    
+                // 부가가치세 계산 (전기 요금계의 10%)
+                vat = Math.ceil(totalAmount * 0.1);
+    
+                // 전력산업기반기금 계산 (전기 요금계의 3.7%, 10원 미만 절사)
+                electricityInfraFund = Math.floor(totalAmount * 0.037 / 10) * 10;
+    
+                // 청구 금액 계산
+                finalBill = totalAmount + vat + electricityInfraFund;
+    
+                // 결과 출력 (쉼표 포맷팅 적용)
+                const resultDiv = document.getElementById('result2');
+                resultDiv.innerHTML = `
+                    <p>기본 요금: ${numberWithCommas(basicFee)}원</p>
+                    <p>전력량 요금: ${numberWithCommas(electricityRate.toFixed(2))}원</p>
+                    <p>기후환경 요금: ${numberWithCommas(climateEnvFee)}원</p>
+                    <p>연료비 조정 요금: ${numberWithCommas(fuelCostAdjFee)}원</p>
+                    <p>전기 요금계: ${numberWithCommas(totalAmount.toFixed(2))}원</p>
+                    <p>부가가치세: ${numberWithCommas(vat)}원</p>
+                    <p>전력산업기반기금: ${numberWithCommas(electricityInfraFund)}원</p>
+                    <p>청구 금액: ${numberWithCommas(finalBill)}원</p>
+                `;
+            }
+        </script>
+</div>
+
+</body>
+</html>
